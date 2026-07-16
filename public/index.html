@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manifest — S3 Drop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="wrap">
+
+  <h1>File Upload Site</h1>
+  <p class="sub">Upload a file and add a note.</p>
+
+  <form id="upload-form">
+    <label class="dropzone" id="dropzone" for="file-input">
+      <input type="file" id="file-input" name="photo" accept="images/*" hidden>
+      <p><strong>Click to choose a file</strong>, or drop one here</p>
+      <p class="dz-filename" id="dz-filename"></p>
+    </label>
+
+    <label class="field-label" for="description">Description</label>
+    <textarea id="description" name="description" rows="3" placeholder="What's in the crate?"></textarea>
+
+    <input type="submit" id="submit-btn"></input>
+    <p class="status" id="status" aria-live="polite"></p>
+  </form>
+<!-- 
+  <h2>Uploads</h2>
+  <div id="feed-list">
+    <p class="empty-state" id="empty-state">Nothing's been uploaded yet.</p>
+  </div> -->
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
