@@ -1,0 +1,13 @@
+services:
+  
+  app:
+    build:
+      context: .
+      target: dev
+    image: aws_class:dev
+    ports:
+      - 3000:3000
+
+    volumes:
+      - .:/app
+      - /app/node_modules
