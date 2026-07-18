@@ -9,5 +9,5 @@ services:
       AWS_REGION: ${AWS_REGION}
       AWS_SECRET_KEY: ${AWS_SECRET_KEY}
       S3_BUCKET: ${S3_BUCKET}
-      # API_URL: ${API_URL}
+
 
