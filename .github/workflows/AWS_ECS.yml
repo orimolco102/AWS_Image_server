@@ -45,7 +45,7 @@ jobs:
             --repository-name $ECR_REPOSITORY \
             --region $AWS_REGION \
             --query 'imageDetails[].imageTags[]' \
-            --output text 2>/dev/null \
+            --output text \
             | tr '\t' '\n' \
             | grep -E '^v[0-9]+$' \
             | sed 's/v//' \
