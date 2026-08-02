@@ -9,7 +9,7 @@ USER node
 CMD [ "npm", "run", "dev" ]
 
 
-FROM node:20-alpine AS prod
+FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV = production
 COPY package*.json ./

@@ -1,0 +1,100 @@
+name: Deploy to AWS ECS
+
+on:
+  push:
+    branches: [master]
+
+env:
+  AWS_REGION: eu-central-1
+  ECR_REPOSITORY: cloud_storage
+  ECS_CLUSTER: CSC-cluster
+  ECS_SERVICE: cloud-storage-service
+  ECS_TASK_DEFINITION_FAMILY: cloud-storage-task
+  CONTAINER_NAME: Main
+
+permissions:
+    contents: read
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+    
+        steps:
+          # Pull code into the runner
+          - name: Checkout code
+            uses: actions/checkout@v4
+        
+          # Authenticate IAM user access keys stored as GitHub secrets
+          - name: Configure AWS credentials
+            uses: aws-actions/configure-aws-credentials@v4
+            with:
+              aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+              aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+              aws-region: ${{ env.AWS_REGION }}
+            
+          #  Log Docker in to ECR registry
+          - name: Login to Amazon ECR
+            id: ecr-login
+            uses: aws-actions/amazon-ecr-login@v2
+
+          # runs the linux commands so the version tag is going up by 1 every time there is an upload
+          - name: Compute next version tag
+            id: next-version
+            run: |
+              LATEST=$(aws ecr describe-images \
+                --repository-name $ECR_REPOSITORY \
+                --region $AWS_REGION \
+                --query 'imageDetails[].imageTags[]' \
+                --output text 2>/dev/null \
+                | tr '\t' '\n' \
+                | grep -E '^v[0-9]+$' \
+                | sed 's/v//' \
+                | sort -n \
+                | tail -1)
+                    
+              if [ -z "$LATEST" ]; then
+                NEXT=1
+              else
+                NEXT=$((LATEST + 1))
+              fi
+                    
+              echo "Next version: v$NEXT"
+              echo "tag=v$NEXT" >> "$GITHUB_OUTPUT"
+            
+          #  Build the image and push it to ECR. tagging works with the version change
+          
+          - name: Build, tag, and push image to ECR
+            id: build-image
+            env:
+              ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+              IMAGE_TAG: ${{ steps.next-version.outputs.tag }}
+            run: |
+              docker build --no-cache -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+              docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+              echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> "$GITHUB_OUTPUT"
+            
+          #  removes the last task definition so it wont cause problems with the version change
+          - name: Download current task definition
+            run: |
+              aws ecs describe-task-definition \
+                --task-definition ${{ env.ECS_TASK_DEFINITION_FAMILY }} \
+                --query taskDefinition > task-definition.json
+            
+          #  Inject the new image URI into the task definition JSON
+          - name: Render new task definition with updated image
+            id: render-task-def
+            uses: aws-actions/amazon-ecs-render-task-definition@v1
+            with:
+              task-definition: task-definition.json
+              container-name: ${{ env.CONTAINER_NAME }}
+              image: ${{ steps.build-image.outputs.image }}
+            
+          #  Register the new task definition revision and update the ECS service to use it
+          #    This waits for the deployment to reach steady state before finishing the job.
+          - name: Deploy to ECS
+            uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+            with:
+              task-definition: ${{ steps.render-task-def.outputs.task-definition }}
+              service: ${{ env.ECS_SERVICE }}
+              cluster: ${{ env.ECS_CLUSTER }}
+              wait-for-service-stability: true

@@ -3,6 +3,7 @@
 const dropzone   = document.getElementById('dropzone');
 const fileInput  = document.getElementById('file-input');
 const dzFilename = document.getElementById('dz-filename');
+const inputtype  = document.getElementById('description');
 
 
 fileInput.addEventListener('change', () => {
@@ -45,8 +46,7 @@ async function FileUpload (event) {
     }
 
     try {
-        // const resp = await fetch(`${process.env.API_URL}/upload`, {
-        const resp = await fetch(`http://127.0.0.1:3000/upload`, {
+        const resp = await fetch(`/upload`, {
             method: "POST",
             body: formData
         });
@@ -59,6 +59,7 @@ async function FileUpload (event) {
         }
 
         event.target.reset();
+        inputtype.value='';
 
     } catch (error) {
         console.error("cant upload to DB:", error);

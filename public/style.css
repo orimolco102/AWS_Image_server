@@ -95,7 +95,7 @@ h2 {
   color: var(--muted);
 }
 
-textarea {
+#description {
   width: 100%;
   resize: vertical;
   background: var(--panel);
@@ -107,7 +107,7 @@ textarea {
   padding: 10px 12px;
 }
 
-textarea:focus,
+#description:focus,
 .dropzone:focus-within {
   outline: 2px solid var(--stamp);
   outline-offset: 1px;
